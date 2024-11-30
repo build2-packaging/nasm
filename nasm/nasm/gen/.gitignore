@@ -1,0 +1,9 @@
+Mkfiles/
+*Makefile*
+*version*
+!version.h
+
+*.dat
+*.dep
+*.ph
+*.pl
