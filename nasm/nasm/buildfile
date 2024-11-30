@@ -1,0 +1,6 @@
+libs =
+#import libs += libhello%lib{hello}
+
+exe{nasm}: {h c}{**} $libs testscript
+
+c.poptions =+ "-I$out_root" "-I$src_root"

@@ -1,0 +1,16 @@
+: 1
+name: nasm
+version: 2.16.3-a.0.z
+language: c
+project: build2-nasm
+summary: nasm C executable
+license: BSD-2-Clause ; BSD 2-Clause "Simplified" License.
+description-file: README.md
+package-description-file: PACKAGE-README.md
+changes-file: CHANGES
+url: https://repo.or.cz/w/nasm.git
+email: nasm-bugs@nasm.us
+package-url: https://github.com/build2-packaging/build2-nasm
+package-email: packaging@build2.org ; Mailing list.
+depends: * build2 >= 0.18.0-
+depends: * bpkg >= 0.18.0-
