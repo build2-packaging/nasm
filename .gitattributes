@@ -17,3 +17,16 @@
 # Use `binary` to make sure certain files are never auto-detected as text.
 #
 #*.png binary
+
+nasm/nasm/asm      symlink=dir
+nasm/nasm/autoconf symlink=dir
+nasm/nasm/common   symlink=dir
+nasm/nasm/config   symlink=dir
+nasm/nasm/disasm   symlink=dir
+nasm/nasm/include  symlink=dir
+nasm/nasm/macros   symlink=dir
+nasm/nasm/nasmlib  symlink=dir
+nasm/nasm/output   symlink=dir
+nasm/nasm/stdlib   symlink=dir
+nasm/nasm/win      symlink=dir
+nasm/nasm/x86      symlink=dir
