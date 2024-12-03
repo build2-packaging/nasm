@@ -1,0 +1,96 @@
+: regression-tests
+:
+
+for file : [paths] $tests
+  subdir = [dir_path] $~/$directory($file)
+  mkdir --no-cleanup -p $subdir
+  ln --no-cleanup --symbolic $src_base/$file $~/$file
+end;
+
+find $~/ -name "*.json" | for -n path [paths]
+  ## relative path so that any embedded path info matches
+  #  reference files (eg. stdout/stderr).
+  test_root = [dir_path] $directory($relative($path, $~))
+  test_root = [dir_path] $path.posix_string("./$test_root")
+
+  ## TODO: fix failing bin diff for avx512f (possibly related to config.h).
+  if ($leaf($path) != 'avx512f.json')
+    echo "test $leaf($path)" >|
+    configs = [json_array] $json.load($path)
+  end
+
+  ## subsequent tests in the same *.json appears to expect
+  #  previous runs to have their members "fall through"
+  #  (eg. 'source'). see test/a64.json as an example.
+  config = [json_object]
+  for json : $configs
+    cfg_read = [json_object] $json.parse($json)
+
+    for member : ($cfg_read)
+      config += $member
+    end
+
+    ## for some reason "target" is an array in the json
+    #  so read each element and make as members instead
+    target = [json_object]
+    for elem : [json_array] ($cfg_read[target])
+      target += $elem
+    end
+
+    ## setup any required environment variables
+    #
+    envars = [strings]
+    for envar : ($config[environ])
+      envars += $envar
+    end
+
+    ## rationalise config (see upstream/travis/nasm-t.py).
+    #
+    id          = [string] ($config[id])
+    ref         = [string] ($config[ref])
+    description = [string] ($config[description])
+    format      = [string] ($config[format])
+    source      = [path] ($config[source])
+    out_bin     = [path] ($target[output])
+    target_bin  = [path] (!$null($out_bin) ? $(out_bin).t :)
+    stdout      = [path] ($target[stdout])
+    stderr      = [path] ($target[stderr])
+    options     = ([string] $config[option])
+    options     = [strings] (!$null($options) ? $regex.split($options, ' ', '\1') :)
+    error       = [string] ($config[error])
+    exit_code   = ($error == 'expected' ? 1 : 0)
+    update      = [bool] ($config[update] != false ? true : false)
+    disable     = [bool] ($config[disable] == true ? true : false)
+    has_output  = [bool] ($update != 'false')
+    skip_test   = [bool] (!$update || $disable)
+
+    if (!$skip_test)
+      ## construct command line expected by test.
+      #  --reproducible: NASM will not emit any variadic output (timestamp, version etc).
+      cmdline = [cmdline] $* --reproducible $options "-I$test_root" "-I$src_base/misc" -L+ -l out.lst
+
+      cmdline += [cmdline] (!$null($format) ? -f $format :)
+      cmdline += [cmdline] (!$null($out_bin) ? -o $path.posix_representation($out_bin) :)
+      cmdline += [cmdline] (!$null($source) ? $path.posix_representation($test_root/$source) :)
+
+      # compare stdout & stderr to expected output (if any)
+      if(!$empty($stdout))
+        cmdline += [cmdline] 1>>>"$test_root/$stdout"
+      end
+      if(!$empty($stderr))
+        cmdline += [cmdline] 2>>>"$test_root/$stderr"
+      end
+
+      # cleanup of generated files.
+      cmdline += [cmdline] &"$~/***"
+
+      env --cwd $path.posix_representation($~) - $envars -- $cmdline == $exit_code || ($error == 'over' ? true : false)
+
+      if (!$null($out_bin))
+        diff "$test_root/$target_bin" "$out_bin"
+      end
+    else
+      echo "skipped test $ref \(error: $error disable: $disable update: $update): $description" >!
+    end
+  end
+end

@@ -1,10 +1,13 @@
 using autoconf
 
-./: exe{nasm}: c{asm/nasm} liba{nasm} testscript
+./: exe{nasm}: c{asm/nasm} liba{nasm} testscript{assembler}
+{
+  tests = [paths] travis/test/*
+}
 ./: exe{ndisasm}: c{disasm/ndisasm} liba{nasm} testscript
 
-liba{nasm}: h{** -config/config} h{config/config} \
-            c{** -asm/nasm -disasm/ndisasm}
+liba{nasm}: h{** -config/config -test/*} h{config/config} \
+            c{** -asm/nasm -disasm/ndisasm -test/* -misc/*}
 
 config/h{config}: in{config}
 {
