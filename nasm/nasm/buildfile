@@ -13,6 +13,9 @@ config/h{config}: in{config}
 {
   PACKAGE_NAME = "\"nasm\""
   ABORT_ON_PANIC = 0
+  ## Circumvent bug in ilog2.h:ilog2_32 (incorrect handling
+  #  of return value). Patch has been submitted.
+  HAVE__BITSCANREVERSE = false
 }
 
 # Build options.
@@ -20,7 +23,7 @@ config/h{config}: in{config}
 of_default = [string] $config.nasm.of_default
 of_name    = [string] $config.nasm.of_name
 of_no_name = [string] $config.nasm.of_no_name
-c.poptions =+ \
+c.poptions =+ -DHAVE_CONFIG_H \
               (!$empty($of_default)   ? -DOF_DEFAULT=of_$of_default :) \
               (!$empty($of_name)      ? -DOF_$ucase($of_name) :) \
               (!$empty($of_no_name)   ? -DOF_NO_$ucase($of_no_name) :) \
@@ -68,7 +71,6 @@ if ($c.id.type == 'msvc')
 }
 else
 {
-    c.poptions =+ -DHAVE_CONFIG_H -U__STRICT_ANSI__
     c.coptions =+ -Wno-deprecated-declarations \
                   -fwrapv \
                   -ftrivial-auto-var-init=zero \
