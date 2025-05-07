@@ -16,6 +16,7 @@ config/h{config}: in{config}
   ## Circumvent bug in ilog2.h:ilog2_32 (incorrect handling
   #  of return value). Patch has been submitted.
   HAVE__BITSCANREVERSE = false
+  HAVE_IO_H = ($c.target.system == 'win32-msvc')
 }
 
 # Build options.
