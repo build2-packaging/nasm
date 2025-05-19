@@ -384,6 +384,18 @@
 /* Define to 1 if you have the 'stat' function. */
 #undef HAVE_STAT
 
+/* Define to 1 if the system has the type 'struct stat'. */
+
+/* @@ TODO Change back to #undef if the HAVE_STRUCT_STAT check is added to
+ *    autoconf in the end.
+ */
+#ifdef HAVE_STAT
+#  define HAVE_STRUCT_STAT 1
+#endif
+
+/* Define to 1 if the system has the type 'struct _stati64'. */
+#undef HAVE_STRUCT__STATI64
+
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
@@ -434,12 +446,6 @@
 
 /* Define to 1 if you have the 'strsep' function. */
 #undef HAVE_STRSEP
-
-/* Define to 1 if the system has the type 'struct stat'. */
-#undef HAVE_STRUCT_STAT
-
-/* Define to 1 if the system has the type 'struct _stati64'. */
-#undef HAVE_STRUCT__STATI64
 
 /* Define to 1 if you have the 'sysconf' function. */
 #undef HAVE_SYSCONF
