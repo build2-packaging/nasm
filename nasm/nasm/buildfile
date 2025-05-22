@@ -17,6 +17,14 @@ config/h{config}: in{config}
   #  of return value). Patch has been submitted.
   HAVE__BITSCANREVERSE = false
   HAVE_IO_H = ($c.target.system == 'win32-msvc')
+
+  # True if S_ISREG is a function instead of a macro but it's a macro on all
+  # platforms I checked so just define it to false.
+  HAVE_S_ISREG = false
+
+  # Not referenced in any source code but either way it should be present on
+  # any system that supports standard C.
+  HAVE_STRING_H = true
 }
 
 # Build options.
