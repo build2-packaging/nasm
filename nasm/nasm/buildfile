@@ -25,6 +25,18 @@ config/h{config}: in{config}
   # Not referenced in any source code but either way it should be present on
   # any system that supports standard C.
   HAVE_STRING_H = true
+
+  # The sole purpose of this (NASM-specific) check is to work around a GCC bug
+  # fixed 11 years ago (GCC 4.9.0) in which the "missing prototypes" or "no
+  # previous declaration" warnings are emitted for C99-style inline
+  # functions. Assume not many users are still on gcc < 4.9.0. (See the
+  # upstream autoconf/m4/pa_check_bad_stdc_inline.m4 and include/compiler.h
+  # for more details.)
+  HAVE_STDC_INLINE = true
+
+  # This header was deprecated in C23, so after that point it may or may not
+  # have been removed from an implementation, so have to search for it.
+  HAVE_STDNORETURN_H = ($c.find_system_header("stdnoreturn.h") != [null])
 }
 
 # Build options.
