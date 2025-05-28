@@ -4,7 +4,12 @@ using autoconf
 {
   tests = [paths] travis/test/*
 }
+
 ./: exe{ndisasm}: c{disasm/ndisasm} liba{nasm} testscript
+
+# Ensure manifest.xml is distributed.
+exe{nasm ndisasm}: file{win/manifest.xml}: \
+  include = ($c.id.type == 'msvc' ? adhoc : false)
 
 liba{nasm}: h{** -config/config -test/*} h{config/config} \
             c{** -asm/nasm -disasm/ndisasm -test/* -misc/*}
