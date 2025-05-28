@@ -34,9 +34,24 @@ config/h{config}: in{config}
   # for more details.)
   HAVE_STDC_INLINE = true
 
-  # This header was deprecated in C23, so after that point it may or may not
-  # have been removed from an implementation, so have to search for it.
-  HAVE_STDNORETURN_H = ($c.find_system_header("stdnoreturn.h") != [null])
+  # True if the C11 stdnoreturn.h header is available.
+  #
+  # Note that upstream appears to enable this macro regardless of what C
+  # standard is enabled (see AC_CHECK_HEADERS) so do the same here.
+  #
+  # As for MSVC, its C compiler defaults to ANSI C89 so we would have to set
+  # std/ to >=C11 (otherwise compilation fails). However the Windows SDK and
+  # UCRT libraries installed with MSVC 16.10 and newer don't support C11 or
+  # C17 code (see the /std option documentation). In fact build2 does not even
+  # pass the /std compiler option if c.std is 11, 17, or 18 and MSVC is 12.0
+  # or newer (see libbuild2/c/init.cxx). And C23 seems too new to force on
+  # users. Therefore rather disable this macro under MSVC.
+  #
+  # @@ TODO Factor the enabled C standard into the decision?
+  #
+  HAVE_STDNORETURN_H = ($c.class != 'msvc'                                      \
+                        ? ($c.find_system_header("stdnoreturn.h") != [null])    \
+                        : false)
 }
 
 # Build options.
