@@ -92,6 +92,24 @@ c.poptions =+ "-I$src_base/gen" \
               "-I$src_base/gen/output" \
               "-I$src_base/gen/x86"
 
+if ($c.class == 'msvc')
+{
+  # Define _CRT_NONSTDC_NO_WARNINGS because upstream calls functions like
+  # stricmp(), strnicmp(), and fileno() instead of the more proper
+  # '_'-prefixed versions (e.g. _stricmp()), resulting in warnings like
+  # "warning C4996: 'stricmp': The POSIX name for this item is
+  # deprecated. Instead, use the ISO C and C++ conformant name: _stricmp. See
+  # online help for details." Oddly I don't see them trying to deal with this
+  # situation anywhere. Apparently (based on a source code inspection) they're
+  # just letting their MSVC build emit 149 warnings.
+  #
+  # Similar story for _CRT_SECURE_NO_WARNINGS (warning C4996 for 66 calls to
+  # fopen, strerror, strncpy, strcat, etc.)
+  #
+  c.coptions += /D_CRT_NONSTDC_NO_WARNINGS \
+                /D_CRT_SECURE_NO_WARNINGS
+}
+
 # TODO: Look through msvc.h and check what is missing
 #       for us to just use config.h (-DHAVE_CONFIG_H)
 #       instead (it builds with config.h but generates
