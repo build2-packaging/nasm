@@ -1,0 +1,9 @@
+* Upstream warnings
+  On Windows the upstream code produces a lot of warnings. I've disabled the
+  warnings about deprecated and unsafe functions because those calls have
+  clearly not been left in there by accident and thus will probably not be
+  changing anytime soon. However I am not disabling the warnings about
+  potentially lossy type conversions because those might be serious. The ones
+  I did check look like the developers knew exactly what they were doing but I
+  do not have the time to check every one of the 60 cases so let's leave these
+  warnings visible to users.
