@@ -36,21 +36,105 @@
 
 #include "compiler.h"
 
-#ifdef ILOG2_C                  /* For generating the out-of-line functions */
-# undef extern_inline
-# define extern_inline
-# define inline_prototypes
+/* Support either C99 inline semantics or no inlining.
+ *
+ * The reason we had to patch this code is because MSVC issues "duplicate
+ * symbol" linker errors when including this header from ilog2.c which results
+ * in the following code:
+ *
+ *   inline void foo() {} // From the header
+ *   extern void foo();   // Generate definition with external linkage
+ *
+ * Changing the `extern` to `extern inline` removes the warnings. Most online
+ * references mention only `extern line` but the C standard seems to say that
+ * both are correct, and GCC does accept both. So assume the problem is MSVC's
+ * C support which has been called less than solid in the past.
+ *
+ * The Chromium issue at https://issues.chromium.org/issues/41473981 claims
+ * that MSVC's `inline` has C++ semantics. The MSVC docs don't cover linkage (
+ * https://learn.microsoft.com/en-us/cpp/c-language/inline-functions). And as
+ * far as I can tell NASM's custom autoconf test will enable C99 inline on
+ * MSVC. So it's hard to tell what is supposed to be correct. @@ TODO So let's
+ * enable C99 inlining for now and see what happens during CI under other
+ * versions of MSVC.
+ *
+ * C99 inline semantics (in the NASM context) are as follows:
+ *
+ * All TUs but ilog2.c contain only an inline-qualified definition of each
+ * function. These definitions all have internal linkage.
+ *
+ * The ilog2.c TU contains the same inline-qualified definitions but also, for
+ * each function, an extern inline-qualified declaration. These generate the
+ * sole external-linkage definition of each function.
+ *
+ * This is what we need to end up with:
+ *
+ * Inlining enabled (C99 semantics):
+ *
+ *   All TUs but ilog2.c:
+ *
+ *     inline void foo() {}
+ *
+ *   ilog2.c:
+ *
+ *     extern inline void foo();
+ *     inline void foo() {}
+ *
+ * Inlining disabled:
+ *
+ *   All TUs but ilog2.c:
+ *
+ *     void foo();
+ *
+ *   ilog2.c:
+ *
+ *     void foo();
+ *     void foo() {}
+ */
+
+/* Inline qualifier for function declarations. If undefined don't emit
+ * function declarations.
+ */
+#undef decl_inline
+
+/* Inline qualifier for function definitions. If undefined don't emit function
+ * definitions.
+ */
+#undef defn_inline
+
+/* Note: make only a basic attempt at supporting GNU inline semantics; this
+ * won't be tested. Upstream only supports GNU inline semantics in order to
+ * work around a GCC bug fixed 11 years ago (GCC 4.9.0) in which the "missing
+ * prototypes" or "no previous declaration" warnings are emitted for C99-style
+ * inline functions. Presumably not many users are still on gcc < 4.9.0. (See
+ * the upstream autoconf/m4/pa_check_bad_stdc_inline.m4 for more details.)
+ */
+#ifdef HAVE_STDC_INLINE
+#  ifdef ILOG2_C
+#    define decl_inline extern inline
+#  endif
+#  define defn_inline inline
+#elif defined(HAVE_GNU_INLINE)
+#  ifdef ILOG2_C
+#    define decl_inline extern
+#  endif
+#  define defn_inline extern inline
+#else
+#  define decl_inline
+#  ifdef ILOG2_C
+#    define defn_inline
+#  endif
 #endif
 
-#ifdef inline_prototypes
-extern unsigned int const_func ilog2_32(uint32_t v);
-extern unsigned int const_func ilog2_64(uint64_t v);
-extern unsigned int const_func ilog2_64(uint64_t vv);
-extern int const_func alignlog2_32(uint32_t v);
-extern int const_func alignlog2_64(uint64_t v);
+#ifdef decl_inline
+decl_inline unsigned int const_func ilog2_32(uint32_t v);
+decl_inline unsigned int const_func ilog2_64(uint64_t v);
+decl_inline unsigned int const_func ilog2_64(uint64_t vv);
+decl_inline int const_func alignlog2_32(uint32_t v);
+decl_inline int const_func alignlog2_64(uint64_t v);
 #endif
 
-#ifdef extern_inline
+#ifdef defn_inline
 
 #define ROUND(v, a, w)                                  \
     do {                                                \
@@ -63,7 +147,7 @@ extern int const_func alignlog2_64(uint64_t v);
 
 #if defined(HAVE___BUILTIN_CLZ) && INT_MAX == 2147483647
 
-extern_inline unsigned int const_func ilog2_32(uint32_t v)
+defn_inline unsigned int const_func ilog2_32(uint32_t v)
 {
     if (!v)
         return 0;
@@ -73,7 +157,7 @@ extern_inline unsigned int const_func ilog2_32(uint32_t v)
 
 #elif defined(__GNUC__) && defined(__x86_64__)
 
-extern_inline unsigned int const_func ilog2_32(uint32_t v)
+defn_inline unsigned int const_func ilog2_32(uint32_t v)
 {
     unsigned int n;
 
@@ -85,7 +169,7 @@ extern_inline unsigned int const_func ilog2_32(uint32_t v)
 
 #elif defined(__GNUC__) && defined(__i386__)
 
-extern_inline unsigned int const_func ilog2_32(uint32_t v)
+defn_inline unsigned int const_func ilog2_32(uint32_t v)
 {
     unsigned int n;
 
@@ -104,7 +188,7 @@ extern_inline unsigned int const_func ilog2_32(uint32_t v)
 
 #elif defined(HAVE__BITSCANREVERSE)
 
-extern_inline unsigned int const_func ilog2_32(uint32_t v)
+defn_inline unsigned int const_func ilog2_32(uint32_t v)
 {
     unsigned long ix;
     return _BitScanReverse(&ix, v) ? v : 0;
@@ -112,7 +196,7 @@ extern_inline unsigned int const_func ilog2_32(uint32_t v)
 
 #else
 
-extern_inline unsigned int const_func ilog2_32(uint32_t v)
+defn_inline unsigned int const_func ilog2_32(uint32_t v)
 {
     unsigned int p = 0;
 
@@ -129,7 +213,7 @@ extern_inline unsigned int const_func ilog2_32(uint32_t v)
 
 #if defined(HAVE__BUILTIN_CLZLL) && LLONG_MAX == 9223372036854775807LL
 
-extern_inline unsigned int const_func ilog2_64(uint64_t v)
+defn_inline unsigned int const_func ilog2_64(uint64_t v)
 {
     if (!v)
         return 0;
@@ -139,7 +223,7 @@ extern_inline unsigned int const_func ilog2_64(uint64_t v)
 
 #elif defined(__GNUC__) && defined(__x86_64__)
 
-extern_inline unsigned int const_func ilog2_64(uint64_t v)
+defn_inline unsigned int const_func ilog2_64(uint64_t v)
 {
     uint64_t n;
 
@@ -151,7 +235,7 @@ extern_inline unsigned int const_func ilog2_64(uint64_t v)
 
 #elif defined(HAVE__BITSCANREVERSE64)
 
-extern_inline unsigned int const_func ilog2_64(uint64_t v)
+defn_inline unsigned int const_func ilog2_64(uint64_t v)
 {
     unsigned long ix;
     return _BitScanReverse64(&ix, v) ? ix : 0;
@@ -159,7 +243,7 @@ extern_inline unsigned int const_func ilog2_64(uint64_t v)
 
 #else
 
-extern_inline unsigned int const_func ilog2_64(uint64_t vv)
+defn_inline unsigned int const_func ilog2_64(uint64_t vv)
 {
     unsigned int p = 0;
     uint32_t v;
@@ -178,7 +262,7 @@ extern_inline unsigned int const_func ilog2_64(uint64_t vv)
 /*
  * v == 0 ? 0 : is_power2(x) ? ilog2_X(v) : -1
  */
-extern_inline int const_func alignlog2_32(uint32_t v)
+defn_inline int const_func alignlog2_32(uint32_t v)
 {
     if (unlikely(v & (v-1)))
         return -1;              /* invalid alignment */
@@ -186,7 +270,7 @@ extern_inline int const_func alignlog2_32(uint32_t v)
     return ilog2_32(v);
 }
 
-extern_inline int const_func alignlog2_64(uint64_t v)
+defn_inline int const_func alignlog2_64(uint64_t v)
 {
     if (unlikely(v & (v-1)))
         return -1;              /* invalid alignment */
@@ -196,6 +280,6 @@ extern_inline int const_func alignlog2_64(uint64_t v)
 
 #undef ROUND
 
-#endif /* extern_inline */
+#endif /* defn_inline */
 
 #endif /* ILOG2_H */
