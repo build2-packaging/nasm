@@ -157,7 +157,6 @@ else
 {
     c.coptions =+ -Wno-deprecated-declarations \
                   -fwrapv \
-                  -ftrivial-auto-var-init=zero \
                   -fno-common \
                   -ffunction-sections \
                   -fdata-sections \
