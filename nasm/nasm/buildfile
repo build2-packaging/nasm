@@ -31,13 +31,21 @@ config/h{config}: in{config}
   # any system that supports standard C.
   HAVE_STRING_H = true
 
-  # The sole purpose of this (NASM-specific) check is to work around a GCC bug
-  # fixed 11 years ago (GCC 4.9.0) in which the "missing prototypes" or "no
-  # previous declaration" warnings are emitted for C99-style inline
-  # functions. Assume not many users are still on gcc < 4.9.0. (See the
-  # upstream autoconf/m4/pa_check_bad_stdc_inline.m4 and include/compiler.h
-  # for more details.)
-  HAVE_STDC_INLINE = true
+  # True if the compiler supports C99 inline semantics.
+  #
+  # Always enable it on MSVC because it cannot be detected based on the
+  # compiler's C standard (__STDC_VERSION__ is only defined in C11 and C17
+  # modes) and we can't set the C standard because build2 doesn't even pass
+  # c.std to MSVC's /std option if c.std is C99, C11, or C17 because C support
+  # is so spotty in MSVC. C23 can be set but that is too new. Also, based on
+  # my tests thus far MSVC accepts C99 inline semantics without /std specified
+  # (which means C89 mode by the way).
+  #
+  # Under other compilers the upstream compiler.h will define this macro if
+  # __STDC_VERSION__ is C99 or later (and gnu90 mode or similar is not
+  # enabled).
+  #
+  HAVE_STDC_INLINE = ($c.class == 'msvc')
 
   # True if the C11 stdnoreturn.h header is available.
   #
