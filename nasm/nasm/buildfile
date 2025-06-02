@@ -65,6 +65,18 @@ config/h{config}: in{config}
   HAVE_STDNORETURN_H = ($c.class != 'msvc'                                      \
                         ? ($c.find_system_header("stdnoreturn.h") != [null])    \
                         : false)
+
+  # These checks were added upstream because some declarations were hidden on
+  # MinGW but CI confirms this is no longer the case (at least for Mingw-w64).
+  #
+  HAVE_DECL_STRCASECMP  = true
+  HAVE_DECL_STRICMP     = true
+  HAVE_DECL_STRLCPY     = true
+  HAVE_DECL_STRNCASECMP = true
+  HAVE_DECL_STRNICMP    = true
+  HAVE_DECL_STRNLEN     = true
+  HAVE_DECL_STRRCHRNUL  = true
+  HAVE_DECL_STRSEP      = true
 }
 
 # Build options.

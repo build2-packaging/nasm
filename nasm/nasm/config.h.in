@@ -210,7 +210,7 @@
 
 /* Define to 1 if you have the declaration of 'strrchrnul', and to 0 if you
    don't. */
-// #undef HAVE_DECL_STRRCHRNUL
+#undef HAVE_DECL_STRRCHRNUL
 
 /* Define to 1 if you have the declaration of 'strsep', and to 0 if you don't.
  */
