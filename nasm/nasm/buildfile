@@ -77,6 +77,11 @@ config/h{config}: in{config}
   HAVE_DECL_STRNLEN     = true
   HAVE_DECL_STRRCHRNUL  = true
   HAVE_DECL_STRSEP      = true
+
+  # Not supported by MSVC or clang on Windows.
+  #
+  HAVE_FUNC_ATTRIBUTE_UNUSED = ($c.target.class != 'windows' || \
+                                $c.target.system == 'mingw32')
 }
 
 # Build options.
