@@ -1,0 +1,28 @@
+* Warnings
+** Known warnings: Linux, FreeBSD, macOS
+   - preproc.c:2314:10: warning: variable 'skip_open' set but not used
+   - preproc.c:2780:43: warning: use of bitwise '|' with boolean operands
+   - preproc.c:5945:10: warning: variable 'bad_bracket' set but not used
+   - outcoff.c:1245:9: warning: ‘__builtin_strncpy’ specified bound 8 equals
+     destination size \\
+     Seen on gcc <= 14. Don't look like false positives but do appear
+     completely intentional on the developers' parts.
+** Known warnings: Windows
+   On Windows the upstream code produces a lot of warnings. I've disabled the
+   warnings about deprecated and unsafe functions because those calls have
+   clearly not been left in there by accident and thus will probably not be
+   changing anytime soon. However I am not disabling the warnings about
+   potentially lossy type conversions because those might be serious. The ones
+   I did check look like the developers knew exactly what they were doing but
+   I do not have the time to check every one of the 60 cases so let's leave
+   these warnings visible to users.
+
+   - "Set but not used" variable warnings as on other OSes
+   - strncpy bounds warnings (Mingw-w64) as on other OSes
+   - Numerous "possible loss of data" warnings
+   - Unused function \\
+     Due to there not being an `unused` attribute available under MSVC and
+     clang.
+     - parser.c:210:13: warning: unused function 'next_expr'
+     - preproc.c:374:1: warning: unused function 'tok_match'
+     - preproc.c:767:8: warning: unused function 'quote_token'

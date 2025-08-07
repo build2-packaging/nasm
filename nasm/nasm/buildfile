@@ -4,7 +4,12 @@ using autoconf
 {
   tests = [paths] travis/test/*
 }
+
 ./: exe{ndisasm}: c{disasm/ndisasm} liba{nasm} testscript
+
+# Ensure manifest.xml is distributed.
+exe{nasm ndisasm}: file{win/manifest.xml}: \
+  include = ($c.id.type == 'msvc' ? adhoc : false)
 
 liba{nasm}: h{** -config/config -test/*} h{config/config} \
             c{** -asm/nasm -disasm/ndisasm -test/* -misc/*}
@@ -16,6 +21,67 @@ config/h{config}: in{config}
   ## Circumvent bug in ilog2.h:ilog2_32 (incorrect handling
   #  of return value). Patch has been submitted.
   HAVE__BITSCANREVERSE = false
+  HAVE_IO_H = ($c.target.system == 'win32-msvc')
+
+  # True if S_ISREG is a function instead of a macro but it's a macro on all
+  # platforms I checked so just define it to false.
+  HAVE_S_ISREG = false
+
+  # Not referenced in any source code but either way it should be present on
+  # any system that supports standard C.
+  HAVE_STRING_H = true
+
+  # True if the compiler supports C99 inline semantics.
+  #
+  # Always enable it on MSVC because it cannot be detected based on the
+  # compiler's C standard (__STDC_VERSION__ is only defined in C11 and C17
+  # modes) and we can't set the C standard because build2 doesn't even pass
+  # c.std to MSVC's /std option if c.std is C99, C11, or C17 because C support
+  # is so spotty in MSVC. C23 can be set but that is too new. Also, based on
+  # my tests thus far MSVC accepts C99 inline semantics without /std specified
+  # (which means C89 mode by the way).
+  #
+  # Under other compilers the upstream compiler.h will define this macro if
+  # __STDC_VERSION__ is C99 or later (and gnu90 mode or similar is not
+  # enabled).
+  #
+  HAVE_STDC_INLINE = ($c.class == 'msvc')
+
+  # True if the C11 stdnoreturn.h header is available.
+  #
+  # Note that upstream appears to enable this macro regardless of what C
+  # standard is enabled (see AC_CHECK_HEADERS) so do the same here.
+  #
+  # As for MSVC, its C compiler defaults to ANSI C89 so we would have to set
+  # std/ to >=C11 (otherwise compilation fails). However the Windows SDK and
+  # UCRT libraries installed with MSVC 16.10 and newer don't support C11 or
+  # C17 code (see the /std option documentation). In fact build2 does not even
+  # pass the /std compiler option if c.std is 11, 17, or 18 and MSVC is 12.0
+  # or newer (see libbuild2/c/init.cxx). And C23 seems too new to force on
+  # users. Therefore rather disable this macro under MSVC.
+  #
+  # @@ TODO Factor the enabled C standard into the decision?
+  #
+  HAVE_STDNORETURN_H = ($c.class != 'msvc'                                      \
+                        ? ($c.find_system_header("stdnoreturn.h") != [null])    \
+                        : false)
+
+  # These checks were added upstream because some declarations were hidden on
+  # MinGW but CI confirms this is no longer the case (at least for Mingw-w64).
+  #
+  HAVE_DECL_STRCASECMP  = true
+  HAVE_DECL_STRICMP     = true
+  HAVE_DECL_STRLCPY     = true
+  HAVE_DECL_STRNCASECMP = true
+  HAVE_DECL_STRNICMP    = true
+  HAVE_DECL_STRNLEN     = true
+  HAVE_DECL_STRRCHRNUL  = true
+  HAVE_DECL_STRSEP      = true
+
+  # Not supported by MSVC or clang on Windows.
+  #
+  HAVE_FUNC_ATTRIBUTE_UNUSED = ($c.target.class != 'windows' || \
+                                $c.target.system == 'mingw32')
 }
 
 # Build options.
@@ -51,6 +117,24 @@ c.poptions =+ "-I$src_base/gen" \
               "-I$src_base/gen/output" \
               "-I$src_base/gen/x86"
 
+if ($c.class == 'msvc')
+{
+  # Define _CRT_NONSTDC_NO_WARNINGS because upstream calls functions like
+  # stricmp(), strnicmp(), and fileno() instead of the more proper
+  # '_'-prefixed versions (e.g. _stricmp()), resulting in warnings like
+  # "warning C4996: 'stricmp': The POSIX name for this item is
+  # deprecated. Instead, use the ISO C and C++ conformant name: _stricmp. See
+  # online help for details." Oddly I don't see them trying to deal with this
+  # situation anywhere. Apparently (based on a source code inspection) they're
+  # just letting their MSVC build emit 149 warnings.
+  #
+  # Similar story for _CRT_SECURE_NO_WARNINGS (warning C4996 for 66 calls to
+  # fopen, strerror, strncpy, strcat, etc.)
+  #
+  c.coptions += /D_CRT_NONSTDC_NO_WARNINGS \
+                /D_CRT_SECURE_NO_WARNINGS
+}
+
 # TODO: Look through msvc.h and check what is missing
 #       for us to just use config.h (-DHAVE_CONFIG_H)
 #       instead (it builds with config.h but generates
@@ -73,7 +157,6 @@ else
 {
     c.coptions =+ -Wno-deprecated-declarations \
                   -fwrapv \
-                  -ftrivial-auto-var-init=zero \
                   -fno-common \
                   -ffunction-sections \
                   -fdata-sections \

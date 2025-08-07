@@ -210,7 +210,7 @@
 
 /* Define to 1 if you have the declaration of 'strrchrnul', and to 0 if you
    don't. */
-// #undef HAVE_DECL_STRRCHRNUL
+#undef HAVE_DECL_STRRCHRNUL
 
 /* Define to 1 if you have the declaration of 'strsep', and to 0 if you don't.
  */
@@ -384,6 +384,21 @@
 /* Define to 1 if you have the 'stat' function. */
 #undef HAVE_STAT
 
+/* Define to 1 if the system has the type 'struct stat'. */
+
+/* @@ TODO Change back to #undef if the HAVE_STRUCT_STAT check is added to
+ *    autoconf in the end.
+ */
+#ifdef HAVE_STAT
+#  define HAVE_STRUCT_STAT 1
+#endif
+
+/* Define to 1 if the system has the type 'struct _stati64'. */
+#undef HAVE_STRUCT__STATI64
+
+/* Define to 1 if you have the 'S_ISREG' function. */
+#undef HAVE_S_ISREG
+
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
@@ -435,12 +450,6 @@
 /* Define to 1 if you have the 'strsep' function. */
 #undef HAVE_STRSEP
 
-/* Define to 1 if the system has the type 'struct stat'. */
-#undef HAVE_STRUCT_STAT
-
-/* Define to 1 if the system has the type 'struct _stati64'. */
-#undef HAVE_STRUCT__STATI64
-
 /* Define to 1 if you have the 'sysconf' function. */
 #undef HAVE_SYSCONF
 
@@ -461,9 +470,6 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the 'S_ISREG' function. */
-#undef HAVE_S_ISREG
 
 /* Define to 1 if you have some version of the typeof operator. */
 #undef HAVE_TYPEOF
@@ -741,7 +747,7 @@
 #endif
 
 /* Define as 'unsigned int' if <stddef.h> doesn't define. */
-#undef size_t
+// #undef size_t
 
 /* Define if your snprintf function is not named snprintf. */
 // #undef snprintf
