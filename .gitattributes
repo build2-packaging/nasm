@@ -23,7 +23,6 @@ nasm/nasm/autoconf symlink=dir
 nasm/nasm/common   symlink=dir
 nasm/nasm/config   symlink=dir
 nasm/nasm/disasm   symlink=dir
-nasm/nasm/include  symlink=dir
 nasm/nasm/macros   symlink=dir
 nasm/nasm/misc     symlink=dir
 nasm/nasm/nasmlib  symlink=dir
