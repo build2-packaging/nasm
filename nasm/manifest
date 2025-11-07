@@ -1,6 +1,6 @@
 : 1
 name: nasm
-version: 2.16.3-a.0.z
+version: 2.16.3
 language: c
 project: nasm
 summary: assembler & disassembler, targeting the Intel x86 series of processors.
