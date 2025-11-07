@@ -1,0 +1,8 @@
+: 1
+name: nasm
+version: 2.16.3
+language: c
+project: nasm
+summary: assembler & disassembler, targeting the Intel x86 series of\
+ processors.
+license: BSD-2-Clause; BSD 2-Clause "Simplified" License.
